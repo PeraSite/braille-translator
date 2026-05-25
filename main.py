@@ -3,6 +3,7 @@ from __future__ import annotations
 from error import ConversionError
 from parser import parse_braille_cells
 from translators.english import braille_to_english, english_to_braille
+from translators.korean import braille_to_korean, korean_to_braille
 from visualizer import visualize_cells
 
 
@@ -37,12 +38,45 @@ def translate_braille_to_english() -> None:
     print(result)
 
 
+def translate_korean_to_braille() -> None:
+    text = input("한글 입력: ")
+    result = korean_to_braille(text)
+
+    if isinstance(result, ConversionError):
+        print(f"오류: {result}")
+        return
+
+    print("점자 배열:")
+    print(result)
+    print("점자 보기:")
+    print(visualize_cells(result))
+
+
+def translate_braille_to_korean() -> None:
+    raw_cells = input("점자 배열 입력: ")
+    cells = parse_braille_cells(raw_cells)
+
+    if isinstance(cells, ConversionError):
+        print(f"오류: {cells}")
+        return
+
+    result = braille_to_korean(cells)
+    if isinstance(result, ConversionError):
+        print(f"오류: {result}")
+        return
+
+    print("한글:")
+    print(result)
+
+
 def main() -> None:
     while True:
         print()
         print("1. 영어 -> 점자")
         print("2. 점자 -> 영어")
-        print("3. 종료")
+        print("3. 한글 -> 점자")
+        print("4. 점자 -> 한글")
+        print("0. 종료")
         choice = input("선택: ").strip()
 
         if choice == "1":
@@ -50,10 +84,14 @@ def main() -> None:
         elif choice == "2":
             translate_braille_to_english()
         elif choice == "3":
+            translate_korean_to_braille()
+        elif choice == "4":
+            translate_braille_to_korean()
+        elif choice == "0":
             print("종료합니다.")
             break
         else:
-            print("1, 2, 3 중에서 선택해 주세요.")
+            print("0, 1, 2, 3, 4 중에서 선택해 주세요.")
 
 
 if __name__ == "__main__":
