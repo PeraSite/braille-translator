@@ -7,7 +7,7 @@ from translators.korean import braille_to_korean, korean_to_braille
 from visualizer import visualize_cells
 
 
-def translate_english_to_braille() -> None:
+def translate_english_to_braille():
     text = input("영어 입력: ")
     result = english_to_braille(text)
 
@@ -21,7 +21,7 @@ def translate_english_to_braille() -> None:
     print(visualize_cells(result))
 
 
-def translate_braille_to_english() -> None:
+def translate_braille_to_english():
     raw_cells = input("점자 배열 입력: ")
     cells = parse_braille_cells(raw_cells)
 
@@ -38,7 +38,7 @@ def translate_braille_to_english() -> None:
     print(result)
 
 
-def translate_korean_to_braille() -> None:
+def translate_korean_to_braille():
     text = input("한글 입력: ")
     result = korean_to_braille(text)
 
@@ -52,7 +52,7 @@ def translate_korean_to_braille() -> None:
     print(visualize_cells(result))
 
 
-def translate_braille_to_korean() -> None:
+def translate_braille_to_korean():
     raw_cells = input("점자 배열 입력: ")
     cells = parse_braille_cells(raw_cells)
 
@@ -69,7 +69,7 @@ def translate_braille_to_korean() -> None:
     print(result)
 
 
-def main() -> None:
+def main():
     while True:
         print()
         print("1. 영어 -> 점자")
