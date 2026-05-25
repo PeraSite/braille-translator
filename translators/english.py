@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from model import BrailleCell, ConversionError
+from error import ConversionError
+from model import BrailleCell
 from rules.english import BRAILLE_TO_ENGLISH, CAPITAL_SIGN, ENGLISH_TO_BRAILLE
 
 
@@ -75,4 +76,3 @@ def braille_to_english(cells: list[BrailleCell]) -> EnglishResult:
         index += 1
 
     return "".join(letters)
-

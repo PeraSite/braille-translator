@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import ast
 
-from model import BrailleCell, ConversionError
+from error import ConversionError
+from model import BrailleCell
 
 
 def parse_braille_cells(raw_value: str) -> list[BrailleCell] | ConversionError:
@@ -34,4 +35,3 @@ def _is_braille_cell(value: object) -> bool:
             return False
 
     return True
-

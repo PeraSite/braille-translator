@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from model import ConversionError
+from error import ConversionError
 from parser import parse_braille_cells
 from translators.english import braille_to_english, english_to_braille
 from visualizer import visualize_cells
