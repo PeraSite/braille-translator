@@ -11,7 +11,8 @@ uv run main.py
 ## 파일 구조
 
 - `model.py`: 3x2 점자 셀 데이터와 변환 오류 모델
-- `english.py`: 영어 -> 점자, 점자 -> 영어 변환 함수
+- `parser.py`: CLI에서 입력한 점자 배열 파싱
+- `rules/english.py`: 영어 점자 규칙 데이터
+- `translators/english.py`: 영어 -> 점자, 점자 -> 영어 변환 함수
 - `visualizer.py`: 점자 셀 배열을 보기 좋은 2x3 형태로 출력
 - `main.py`: 메뉴형 CLI 실행 파일
-
