@@ -1,0 +1,6 @@
+[project]
+name = "braille-translator"
+version = "0.1.0"
+description = "Braille translator for a school team project"
+requires-python = ">=3.11"
+dependencies = []
