@@ -30,6 +30,44 @@
 uv run main.py
 ```
 
+## Windows에서 처음 실행하는 방법
+
+Python이나 uv가 설치되어 있지 않은 Windows 사용자는 아래 순서대로 실행합니다.
+
+1. PowerShell을 엽니다.
+2. uv를 설치합니다.
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+3. PowerShell을 닫았다가 다시 엽니다.
+4. uv 설치가 되었는지 확인합니다.
+
+```powershell
+uv --version
+```
+
+5. 프로젝트 폴더로 이동합니다.
+
+```powershell
+cd "프로젝트 폴더 경로"
+```
+
+예시:
+
+```powershell
+cd "C:\Users\사용자이름\Downloads\braille-translator"
+```
+
+6. 프로그램을 실행합니다.
+
+```powershell
+uv run main.py
+```
+
+처음 실행할 때는 uv가 필요한 Python과 패키지를 자동으로 준비하므로 시간이 조금 걸릴 수 있습니다.
+
 ## 사용 방법
 
 실행 후 GUI에서 언어와 번역 방향을 선택합니다.

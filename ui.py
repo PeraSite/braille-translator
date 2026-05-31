@@ -4,6 +4,22 @@ import os
 import sys
 from pathlib import Path
 
+
+def _configure_tk_library_paths():
+    prefixes = dict.fromkeys((Path(sys.base_prefix), Path(sys.prefix)))
+
+    for prefix in prefixes:
+        tcl_library = prefix / "lib" / "tcl8.6"
+        tk_library = prefix / "lib" / "tk8.6"
+
+        if tcl_library.exists():
+            os.environ.setdefault("TCL_LIBRARY", str(tcl_library))
+        if tk_library.exists():
+            os.environ.setdefault("TK_LIBRARY", str(tk_library))
+
+
+_configure_tk_library_paths()
+
 import tkinter as tk
 from tkinter import ttk
 
@@ -15,10 +31,9 @@ from visualizer import visualize_cells
 
 
 class BrailleTranslatorApp:
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("점자 번역기")
-        self.root.geometry("700x900")
 
         self.language_var = tk.StringVar(value="한국어")
         self.direction_var = tk.StringVar(value="점역")
@@ -28,9 +43,27 @@ class BrailleTranslatorApp:
 
         self._build_widgets()
         self.update_input_type()
+        self._set_initial_window_geometry()
 
-    def _build_widgets(self) -> None:
-        title = tk.Label(self.root, text="점자 번역기", font=("맑은 고딕", 22, "bold"))
+    def _set_initial_window_geometry(self):
+        width = 700
+        height = 700
+
+        self.root.update_idletasks()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        usable_height = max(620, screen_height - 120)
+        height = min(height, usable_height)
+        x = max(0, (screen_width - width) // 2)
+        y = max(0, (screen_height - height) // 2)
+
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+    def _build_widgets(self):
+        title = tk.Label(
+            self.root, text="점자 번역기", font=("맑은 고딕", 22, "bold")
+        )
         title.pack(pady=20)
 
         language_frame = tk.Frame(self.root)
@@ -85,7 +118,10 @@ class BrailleTranslatorApp:
         self.hint_label.pack(pady=5)
 
         self.text_input_box = tk.Text(
-            self.input_frame, width=65, height=7, font=("맑은 고딕", 11)
+            self.input_frame,
+            width=65,
+            height=7,
+            font=("맑은 고딕", 11),
         )
         self.text_input_box.pack()
 
@@ -115,17 +151,29 @@ class BrailleTranslatorApp:
         button_frame.pack(pady=5)
 
         tk.Button(
-            button_frame, text="점자 추가", command=self.add_braille, width=10
+            button_frame,
+            text="점자 추가",
+            command=self.add_braille,
+            width=10,
         ).pack(side="left", padx=5)
         tk.Button(
-            button_frame, text="초기화", command=self.reset_braille, width=10
+            button_frame,
+            text="초기화",
+            command=self.reset_braille,
+            width=10,
         ).pack(side="left", padx=5)
         tk.Button(
-            button_frame, text="입력 지우기", command=self.clear_braille_input, width=10
+            button_frame,
+            text="입력 지우기",
+            command=self.clear_braille_input,
+            width=10,
         ).pack(side="left", padx=5)
 
         self.input_preview = tk.Text(
-            self.braille_frame, width=65, height=3, font=("맑은 고딕", 10)
+            self.braille_frame,
+            width=65,
+            height=3,
+            font=("맑은 고딕", 10),
         )
         self.input_preview.pack(pady=5)
         self.input_preview.config(state="disabled")
@@ -142,11 +190,16 @@ class BrailleTranslatorApp:
             anchor="w", padx=50
         )
 
-        self.output_box = tk.Text(self.root, width=65, height=7, font=("맑은 고딕", 12))
+        self.output_box = tk.Text(
+            self.root,
+            width=65,
+            height=7,
+            font=("맑은 고딕", 12),
+        )
         self.output_box.pack(pady=5)
         self.output_box.config(state="disabled")
 
-    def update_input_type(self) -> None:
+    def update_input_type(self):
         direction = self.direction_var.get()
 
         if direction == "역점역":
@@ -159,7 +212,7 @@ class BrailleTranslatorApp:
         self.text_input_box.pack()
         self.hint_label.config(text="번역할 문장을 입력하세요.")
 
-    def toggle_dot(self, row: int, col: int) -> None:
+    def toggle_dot(self, row: int, col: int):
         self.braille_values[row][col] = 1 - self.braille_values[row][col]
         button = self.braille_buttons[row][col]
 
@@ -168,7 +221,7 @@ class BrailleTranslatorApp:
         else:
             button.config(text="○", bg="white", fg="black")
 
-    def add_braille(self) -> None:
+    def add_braille(self):
         cell: BrailleCell = (
             (self.braille_values[0][0], self.braille_values[0][1]),
             (self.braille_values[1][0], self.braille_values[1][1]),
@@ -178,18 +231,18 @@ class BrailleTranslatorApp:
         self._refresh_input_preview()
         self.reset_braille()
 
-    def reset_braille(self) -> None:
+    def reset_braille(self):
         for row in range(3):
             for col in range(2):
                 self.braille_values[row][col] = 0
                 self.braille_buttons[row][col].config(text="○", bg="white", fg="black")
 
-    def clear_braille_input(self) -> None:
+    def clear_braille_input(self):
         self.braille_input_list.clear()
         self.reset_braille()
         self._refresh_input_preview()
 
-    def show_result(self) -> None:
+    def show_result(self):
         language = self.language_var.get()
         direction = self.direction_var.get()
 
@@ -220,20 +273,20 @@ class BrailleTranslatorApp:
 
         self._write_output(f"역점역 결과:\n{result}")
 
-    def _refresh_input_preview(self) -> None:
+    def _refresh_input_preview(self):
         self.input_preview.config(state="normal")
         self.input_preview.delete("1.0", tk.END)
         self.input_preview.insert(tk.END, str(self.braille_input_list))
         self.input_preview.config(state="disabled")
 
-    def _write_output(self, text: str) -> None:
+    def _write_output(self, text: str):
         self.output_box.config(state="normal")
         self.output_box.delete("1.0", tk.END)
         self.output_box.insert(tk.END, text)
         self.output_box.config(state="disabled")
 
 
-def main() -> None:
+def main():
     root = tk.Tk()
     BrailleTranslatorApp(root)
     root.mainloop()
