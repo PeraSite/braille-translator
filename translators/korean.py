@@ -6,7 +6,6 @@ from error import ConversionError
 from model import BrailleCell
 from rules.korean import (
     BraillePattern,
-    겹받침,
     공백_점자,
     된소리_초성,
     읽기_가능한_점자,
@@ -24,6 +23,7 @@ KoreanTextResult = str | ConversionError
 
 
 def 한글_자모_분리(한글글자: str) -> tuple[str | None, str | None, str | None]:
+    # 한글 점자는 글자 단위가 아니라 초성/중성/종성 단위로 규칙이 나뉘기 때문에 먼저 자모로 분리한다.
     쪼갠_글자 = h2j(한글글자)
     자모_리스트 = list(jamo_to_hcj(쪼갠_글자))
 
@@ -66,6 +66,7 @@ def korean_to_braille(text: str) -> KoreanBrailleResult:
     cells: list[BrailleCell] = []
 
     for position, 글자 in enumerate(text, start=1):
+        # 공백은 자모 분리 대상이 아니므로 별도의 점자 셀로 바로 저장한다.
         if 글자 == " ":
             cells.append(공백_점자)
             continue
@@ -91,109 +92,75 @@ def korean_to_braille(text: str) -> KoreanBrailleResult:
     return cells
 
 
-def _compose(ing: list[str]) -> str | None:
-    if len(ing) == 1:
-        ing.append("ㅏ")
-    if len(ing) in (2, 3):
-        return j2h(*ing)
-    return None
-
-
-def trans(cell: BrailleCell, ing: list[str]) -> tuple[list[str], str | None]:
-    ret = None
-
-    # 초성부터 판별
-    if cell in 초성_읽기:
-        초성 = 초성_읽기[cell]
-        if len(ing) == 1 and ing[0] == "ㅅ" and 초성 in 된소리_초성:  # ㅅ+ㄱ이 입력된 경우 ㄲ으로 변경
-            ing[0] = 된소리_초성[초성]
-            return ing, ret
-        if ing:
-            ret = _compose(ing)
-            ing.clear()
-        ing.append(초성)  # 빈 리스트에 초성 추가
-        return ing, ret  # 입력 버퍼와 완성된 글자(초기값 None) 리턴
-
-    # 아래부터 중성 판별
-    if cell == 중성_점자["ㅐ"][0]:  # 중성으로 ㅐ가 입력된 경우
-        if len(ing) == 3:  # 입력버퍼에 이미 종성까지 입력됐다면
-            ret = j2h(*ing)  # 글자 완성 후
-            ing.clear()  # 입력버퍼 비우기
-        elif len(ing) == 2:  # 입력버퍼에 중성이 입력되어 있는데
-            if ing[1] == "ㅑ":  # 그게 ㅑ라면
-                ing[1] = "ㅒ"  # ㅒ로 변경
-            elif ing[1] == "ㅘ":
-                ing[1] = "ㅙ"
-            elif ing[1] == "ㅝ":
-                ing[1] = "ㅞ"
-            elif ing[1] == "ㅜ":
-                ing[1] = "ㅟ"
-            else:  # 입력버퍼에 중성이 입력되어 있는데, 그게 복합 모음이 아니라면
-                ret = j2h(*ing)  # 글자 완성 후
-                ing.clear()  # 입력버퍼 지우기
-        if len(ing) == 0:
-            ing.append("ㅇ")
-        if len(ing) == 1:
-            ing.append("ㅐ")
-        return ing, ret
-
-    if cell in 중성_읽기:
-        if len(ing) == 3 or len(ing) == 2:  # 입력버퍼에 이미 중성 또는 종성까지 들어가 있는 경우
-            ret = j2h(*ing)  # 입력버퍼 값으로 글자 완성 후
-            ing.clear()  # 입력버퍼 비우기
-        if len(ing) == 0:  # 초성이 입력되지 않은 채 중성이 입력된 경우
-            ing.append("ㅇ")  # ㅇ을 자동으로 입력
-        ing.append(중성_읽기[cell])  # 중성 입력
-        return ing, ret
-
-    # 아래부터 종성 판별
-    if cell in 종성_읽기:
-        종성 = 종성_읽기[cell]
-        if len(ing) == 3:  # 입력버퍼에 이미 종성까지 입력된 경우
-            합친_종성 = 겹받침.get((ing[2], 종성))
-            if 합친_종성:
-                ing[2] = 합친_종성
-                ret = j2h(*ing)
-                ing.clear()
-                return ing, ret
-            ret = j2h(*ing)  # 위 경우가 아니라면 글자 완성 후 입력버퍼 비우기
-            ing.clear()
-        if len(ing) == 1:  # 초성만 입력되어 있는 겨우 ㅏ 자동 입력
-            ing.append("ㅏ")
-        if len(ing) == 0:  # 입력버퍼가 비워져있는 경우 아 자동 입력
-            ing = ["ㅇ", "ㅏ"]
-        ing.append(종성)  # 종성 입력
-        return ing, ret
-
-    if cell == ((0, 0), (0, 0), (0, 0)):
-        # 전부 0이 입력된 경우 입력버퍼 비우기
-        if len(ing) == 2 or len(ing) == 3:
-            ret = j2h(*ing)
-            ing.clear()
-        elif len(ing) == 1:
-            ret = j2h(ing[0], "ㅏ")
-            ing.clear()
-        return ing, ret
-
-    return [], None
-
-
 def braille_to_korean(cells: list[BrailleCell]) -> KoreanTextResult:
-    ingredients: list[str] = []  # 입력버퍼
-    real_text: list[str] = []  # 완성된 글자 모아두는 리스트
+    real_text: list[str] = []
+    index = 0
 
-    for index, cell in enumerate(cells, start=1):
+    # 변환 중간에 잘못된 점자를 만나면 어느 위치가 문제인지 알려주기 위해 먼저 전체 입력을 검사한다.
+    for position, cell in enumerate(cells, start=1):
         if cell not in 읽기_가능한_점자:
-            return ConversionError(index, cell, "등록되지 않은 한국어 점자 셀입니다.")
+            return ConversionError(position, cell, "등록되지 않은 한국어 점자 셀입니다.")
 
-        ingredients, text = trans(cell, ingredients)
-        if text:
-            real_text.append(text)
+    while index < len(cells):
+        cell = cells[index]
+
         if cell == 공백_점자:
             real_text.append(" ")
+            index += 1
+            continue
 
-    text = _compose(ingredients)
-    if text:
-        real_text.append(text)
+        # 초성이 없는 글자는 ㅇ으로 시작하므로 기본 초성을 ㅇ으로 둔다. 예: 아, 우, 이
+        초성 = "ㅇ"
+        중성 = None
+        종성 = None
+
+        다음_점자 = cells[index + 1] if index + 1 < len(cells) else None
+        # 일부 점자는 초성과 중성 표에 동시에 들어갈 수 있다.
+        # 다음 점자가 중성이면 현재 점자를 새 글자의 초성으로 보는 것이 자연스럽다.
+        if cell in 초성_읽기 and (cell not in 중성_읽기 or 다음_점자 in 중성_읽기):
+            초성 = 초성_읽기[cell]
+            index += 1
+
+            # 된소리는 별도 점자 뒤에 기본 초성이 이어지는 방식이라 두 칸을 한 초성으로 합친다.
+            if cell == ((0, 0), (0, 0), (0, 1)) and index < len(cells):
+                다음_초성 = 초성_읽기.get(cells[index])
+                if 다음_초성 in 된소리_초성:
+                    초성 = 된소리_초성[다음_초성]
+                    index += 1
+
+        if index >= len(cells) or cells[index] not in 중성_읽기:
+            return ConversionError(index + 1, cell, "중성 점자를 찾을 수 없습니다.")
+
+        중성 = 중성_읽기[cells[index]]
+        index += 1
+
+        # ㅒ, ㅙ, ㅞ, ㅟ처럼 두 개의 점자로 표현되는 모음은 앞 모음에 ㅐ 점자가 붙은 형태로 처리한다.
+        if index < len(cells) and cells[index] == 중성_점자["ㅐ"][0]:
+            if 중성 == "ㅑ":
+                중성 = "ㅒ"
+                index += 1
+            elif 중성 == "ㅘ":
+                중성 = "ㅙ"
+                index += 1
+            elif 중성 == "ㅝ":
+                중성 = "ㅞ"
+                index += 1
+            elif 중성 == "ㅜ":
+                중성 = "ㅟ"
+                index += 1
+
+        # 받침 점자가 다음 글자의 초성으로도 해석될 수 있으면, 다음에 중성이 오는지 보고 새 글자로 넘긴다.
+        if index < len(cells) and cells[index] in 종성_읽기:
+            다음_점자 = cells[index + 1] if index + 1 < len(cells) else None
+            다음_글자_초성 = cells[index] in 초성_읽기 and 다음_점자 in 중성_읽기
+
+            if not 다음_글자_초성:
+                종성 = 종성_읽기[cells[index]]
+                index += 1
+
+        if 종성:
+            real_text.append(j2h(초성, 중성, 종성))
+        else:
+            real_text.append(j2h(초성, 중성))
 
     return "".join(real_text).rstrip()
