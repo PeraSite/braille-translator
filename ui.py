@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from pprint import pformat
 
 
 def _configure_tk_library_paths():
@@ -47,13 +48,13 @@ class BrailleTranslatorApp:
 
     def _set_initial_window_geometry(self):
         width = 700
-        height = 700
+        height = 820
 
         self.root.update_idletasks()
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
 
-        usable_height = max(620, screen_height - 120)
+        usable_height = max(720, screen_height - 120)
         height = min(height, usable_height)
         x = max(0, (screen_width - width) // 2)
         y = max(0, (screen_height - height) // 2)
@@ -193,8 +194,8 @@ class BrailleTranslatorApp:
         self.output_box = tk.Text(
             self.root,
             width=65,
-            height=7,
-            font=("맑은 고딕", 12),
+            height=12,
+            font=("맑은 고딕", 11),
         )
         self.output_box.pack(pady=5)
         self.output_box.config(state="disabled")
@@ -258,7 +259,8 @@ class BrailleTranslatorApp:
                 return
 
             self._write_output(
-                f"점자 보기:\n{visualize_cells(result)}\n\n점자 배열:\n{result}"
+                f"점자 보기:\n{visualize_cells(result)}\n\n"
+                f"점자 배열:\n{pformat(result, width=72)}"
             )
             return
 
